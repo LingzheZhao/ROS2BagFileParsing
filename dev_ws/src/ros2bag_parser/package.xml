@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>dev_cpp_pkg</name>
+  <name>ros2bag_parser</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="kyungpyo94@gmail.com">kyungpyo</maintainer>
@@ -17,7 +17,10 @@
   <build_depend>builtin_interfaces</build_depend>
 
   <depend>std_msgs</depend>
-
+  <depend>rosbag2_cpp</depend>
+  <depend>rosidl_runtime_cpp</depend>
+  <depend>rcpputils</depend>
+  
   <exec_depend>rosidl_default_runtime</exec_depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>

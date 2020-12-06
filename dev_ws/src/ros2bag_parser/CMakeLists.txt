@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(dev_cpp_pkg)
-
+project(ros2bag_parser)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -19,43 +18,50 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(rosbag2 REQUIRED)
+find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(rosidl_generator_cpp REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(rosidl_typesupport_introspection_cpp REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(dev_cpp_pkg REQUIRED)
+find_package(rclcpp REQUIRED)
 
+set(msg_files
+  "msg/GpsRx.msg"
+)
 
-rosidl_generate_interfaces(dev_cpp_pkg
-  msg/GpsRx.msg
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
   DEPENDENCIES std_msgs
   DEPENDENCIES builtin_interfaces
 )
 
 include_directories(
   include
-  ${dev_cpp_pkg_INCLUDE_DIRS}
+  ${ros2bag_parser_INCLUDE_DIRS}
 )
 
-add_executable(dev_cpp_node src/dev_cpp_node.cpp)
+add_executable(ros2bag_parser_node src/ros2bag_parser_node.cpp)
 
-target_include_directories(dev_cpp_node PUBLIC
+target_include_directories(ros2bag_parser_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-install(TARGETS dev_cpp_node
+ament_target_dependencies(
+  ros2bag_parser_node
+  "rclcpp"
+  "rosbag2_cpp"
+  "rosbag2_storage"
+  
+)
+  
+install(TARGETS ros2bag_parser_node
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
-ament_target_dependencies(
-  dev_cpp_node
-  "rclcpp"
-  "rosbag2"
-  "rosbag2_storage"
-)
+rosidl_target_interfaces(ros2bag_parser_node
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
