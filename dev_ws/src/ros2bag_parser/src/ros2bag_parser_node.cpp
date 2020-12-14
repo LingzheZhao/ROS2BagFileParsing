@@ -3,71 +3,86 @@
 
 // STD
 #include <iostream>
+#include <filesystem>
 
 // ROS
-#include "rclcpp/rclcpp.hpp"
-#include "rosbag2_cpp/readers/sequential_reader.hpp"
-#include "rosbag2_cpp/typesupport_helpers.hpp"
-#include "rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp"
+#include <rclcpp/rclcpp.hpp>
+#include <rosbag2_cpp/converter_interfaces/serialization_format_converter.hpp>
+#include <rosbag2_cpp/readers/sequential_reader.hpp>
+#include <rosbag2_cpp/typesupport_helpers.hpp>
 
-// ROS MSG
-#include "ros2bag_parser/msg/gps_rx.hpp"
+// PROJECT
+#include "parse_fix.hpp"
+#include "parse_image.hpp"
+#include "parse_imu.hpp"
+#include "parse_time_reference.hpp"
+#include "parse_twist.hpp"
+#include "topic_types.hpp"
 
 using rosbag2_cpp::converter_interfaces::SerializationFormatConverter;
 
-int main(int argc, char ** argv)
-{
-  (void) argc;
-  (void) argv;
-  
-  rosbag2_cpp::readers::SequentialReader reader;
-  rosbag2_cpp::StorageOptions storage_options{};
-  
-  storage_options.uri = ".";
-  storage_options.storage_id = "sqlite3";
 
-  rosbag2_cpp::ConverterOptions converter_options{};
-  converter_options.input_serialization_format = "cdr";
-  converter_options.output_serialization_format = "cdr";
-  reader.open(storage_options, converter_options);
-  
-  auto topics = reader.get_all_topics_and_types();
 
-  // about metadata
-  for (auto t:topics){
-    std::cout << "meta name: " << t.name << std::endl;
-    std::cout << "meta type: " << t.type << std::endl;
-    std::cout << "meta serialization_format: " << t.serialization_format << std::endl;
-  }
-  
-  // read and deserialize "serialized data"
-  if (reader.has_next()){
+rosbag2_cpp::readers::SequentialReader reader;
 
-    // serialized data
-    auto serialized_message = reader.read_next();
-    
-    // deserialization and conversion to ros message
-    ros2bag_parser::msg::GpsRx msg;
-    auto ros_message = std::make_shared<rosbag2_cpp::rosbag2_introspection_message_t>();
-    ros_message->time_stamp = 0;
-    ros_message->message = nullptr;
-    ros_message->allocator = rcutils_get_default_allocator();
-    ros_message->message = &msg;
-    auto library = rosbag2_cpp::get_typesupport_library("ros2bag_parser/msg/GpsRx", "rosidl_typesupport_cpp");
-    auto type_support = rosbag2_cpp::get_typesupport_handle("ros2bag_parser/msg/GpsRx", "rosidl_typesupport_cpp", library);
+int main(int argc, char **argv) {
+    if (argc < 3) {
+        std::cout << "Usage: " << argv[0] << " <db3 file path> <output dir>" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    rosbag2_cpp::SerializationFormatConverterFactory factory;
-    std::unique_ptr<rosbag2_cpp::converter_interfaces::SerializationFormatDeserializer> cdr_deserializer_;
-    cdr_deserializer_ = factory.load_deserializer("cdr");
-    
-    cdr_deserializer_->deserialize(serialized_message, type_support, ros_message);
+    rosbag2_cpp::StorageOptions storage_options{};
+    storage_options.uri = argv[1];
+    storage_options.storage_id = "sqlite3";
+    std::filesystem::path output_dir(argv[2]);
 
-    // ros message data
-    std::cout << std::endl;
-    std::cout << msg.gps_latitude << std::endl;
-    std::cout << msg.gps_longitude << std::endl;
-    std::cout << msg.gps_height << std::endl;
-  }
-  
-  return 0;
+    rosbag2_cpp::ConverterOptions converter_options{};
+    converter_options.input_serialization_format = "cdr";
+    converter_options.output_serialization_format = "cdr";
+    reader.open(storage_options, converter_options);
+
+    auto topics = reader.get_all_topics_and_types();
+
+    // about metadata
+    std::cout << "\n[INFO] Detected meta data file." << std::endl
+              << "[INFO] Topics count:\t" << topics.size() << std::endl
+              << std::endl;
+
+    // assert only one topic in db
+    if (1 != topics.size()) {
+        std::cerr << "Please record topics into separate databases."
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    auto topic = topics[0];
+    auto topic_name = topic.name;
+    auto topic_type = topic.type;
+    auto serialization_format = topic.serialization_format;
+
+    std::cout << "Topic name:\t\t" << topic_name << std::endl
+              << "Topic type:\t\t" << topic_type << std::endl
+              << "serialization_format \t" << serialization_format << std::endl;
+
+    // assert format is cdr
+    if ("cdr" != serialization_format) {
+        std::cerr << "Only CDR serialization_format is supported." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    if (TIME_REF == topic_type) {
+        parse_time_reference(reader, output_dir);
+    } else if (GNSS_FIX == topic_type) {
+        parse_fix(reader, output_dir);
+    } else if (DATA_IMU == topic_type) {
+        parse_imu(reader, output_dir);
+    } else if (TWIST == topic_type) {
+        parse_twist(reader, output_dir);
+    } else if (IMAGE == topic_type) {
+        parse_image(reader, output_dir);
+    } else {
+        std::cout << "Unsupported topic." << std::endl;
+    }
+
+    return EXIT_SUCCESS;
 }

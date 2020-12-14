@@ -8,7 +8,7 @@ endif()
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 20)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -18,24 +18,15 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
-find_package(rosidl_generator_cpp REQUIRED)
-find_package(rosidl_typesupport_cpp REQUIRED)
-find_package(rosidl_typesupport_introspection_cpp REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 
-set(msg_files
-  "msg/GpsRx.msg"
-)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  ${msg_files}
-  DEPENDENCIES std_msgs
-  DEPENDENCIES builtin_interfaces
-)
 
 include_directories(
   include
@@ -48,26 +39,23 @@ target_include_directories(ros2bag_parser_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
+  target_link_libraries(ros2bag_parser_node ${OpenCV_LIBS})
+
 ament_target_dependencies(
   ros2bag_parser_node
   "rclcpp"
   "rosbag2_cpp"
   "rosbag2_storage"
-  
 )
   
 install(TARGETS ros2bag_parser_node
   EXPORT export_${PROJECT_NAME}
   DESTINATION lib/${PROJECT_NAME})
 
-rosidl_target_interfaces(ros2bag_parser_node
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
-
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_export_dependencies(rosidl_default_runtime)
 
 ament_package()
