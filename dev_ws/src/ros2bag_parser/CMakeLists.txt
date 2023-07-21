@@ -6,7 +6,7 @@ if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
 endif()
 
-# Default to C++14
+# Default to C++20
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 20)
 endif()
@@ -34,18 +34,21 @@ include_directories(
 )
 
 add_executable(ros2bag_parser_node src/ros2bag_parser_node.cpp)
+# target_compile_options(ros2bag_parser_node PRIVATE -fsanitize=address)
+# target_link_options(ros2bag_parser_node PRIVATE -fsanitize=address)
 
 target_include_directories(ros2bag_parser_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-  target_link_libraries(ros2bag_parser_node ${OpenCV_LIBS})
+target_link_libraries(ros2bag_parser_node ${OpenCV_LIBS})
 
 ament_target_dependencies(
   ros2bag_parser_node
   "rclcpp"
   "rosbag2_cpp"
   "rosbag2_storage"
+  "sensor_msgs"
 )
   
 install(TARGETS ros2bag_parser_node

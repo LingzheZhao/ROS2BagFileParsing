@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    rosbag2_cpp::StorageOptions storage_options{};
+    rosbag2_storage::StorageOptions storage_options{};
     storage_options.uri = argv[1];
     storage_options.storage_id = "sqlite3";
     std::filesystem::path output_dir(argv[2]);
