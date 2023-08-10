@@ -1,26 +1,24 @@
 # ROS2BagFileParsing
-ROS2 Bag file parsing
-Korean document: https://kyungpyo-kim.github.io/study/ROS2-Bag-file-parsing/
 
 # Getting started
 
-1. Install ros1 melodic
-2. Install ros2 dashing
-3. Install rosbag2 packages
+1. Install ros2 foxy
+2. Install rosbag2 packages
 
     ```bash
-    sudo apt install ros-dashing-rosbag2* ros-dashing-ros2bag*
+    sudo apt install ros-foxy-rosbag2* ros-foxy-ros2bag* ros-foxy-sensor-msgs
     ```
-4. Build
+3. Build
     
     ```bash
-    cd dev_cpp_pkg
+    cd dev_ws
+    rosdep install --from-paths src -y --ignore-src
     colcon build
     ```
 
-5. Run package
+4. Run package
 
     ```bash
     . install/setup.bash
-    ros2 run dev_cpp_pkg dev_cpp_node
+    ros2 run ros2bag_parser ros2bag_parser_node
     ```
